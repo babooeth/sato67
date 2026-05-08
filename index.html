@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SATO — Mint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #080808;
+    --panel:   #0f0f0f;
+    --border:  #1e1e1e;
+    --border2: #2a2a2a;
+    --text:    #e8e8e0;
+    --muted:   #666;
+    --dim:     #333;
+    --accent:  #c8f060;
+    --warn:    #f0a060;
+    --mono:    'Space Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ─── Grid noise overlay ─────────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(200,240,96,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,240,96,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,8,8,0.92);
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  .nav-info { display: flex; gap: 2rem; }
+  .nav-stat { text-align: right; }
+  .nav-stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .nav-stat-value { font-size: 13px; font-weight: 700; color: var(--text); }
+
+  /* ─── Hero ─────────────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 12rem 2rem 6rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+  }
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; padding: 8rem 1.5rem 3rem; gap: 3rem; }
+    nav { padding: 1rem 1.5rem; }
+    .nav-info { gap: 1rem; }
+  }
+
+  .hero-text h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+  }
+  .hero-text h1 span { color: var(--text); }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 380px;
+    margin-bottom: 2rem;
+  }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    color: var(--muted);
+  }
+  .tag.accent { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── Preview card ─────────────────────────────────────────────── */
+  .preview-card {
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--panel);
+    position: relative;
+  }
+  .preview-art {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #0f1a0a 0%, #0a0a14 50%, #1a0f0a 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .preview-art::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 30% 40%, rgba(200,240,96,0.08) 0%, transparent 50%),
+                      radial-gradient(circle at 70% 60%, rgba(240,160,96,0.06) 0%, transparent 50%);
+  }
+  .art-svg { width: 60%; height: 60%; position: relative; z-index: 1; }
+  .preview-meta {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .preview-name {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .preview-rarity {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ─── Mint panel ───────────────────────────────────────────────── */
+  .main { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 2rem 6rem; }
+
+  .mint-panel {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .panel-title {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .price-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .price-eth {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 2.5rem;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .price-usd {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .qty-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .qty-label { font-size: 12px; color: var(--muted); flex: 1; }
+  .qty-btns { display: flex; align-items: center; gap: 0; border: 1px solid var(--border2); border-radius: 3px; overflow: hidden; }
+  .qty-btn {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 18px;
+    width: 40px; height: 40px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:hover { background: var(--border); }
+  .qty-val {
+    width: 50px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    border-left: 1px solid var(--border2);
+    border-right: 1px solid var(--border2);
+  }
+  .cost-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.02);
+    border-radius: 3px;
+  }
+  .cost-row span:last-child { color: var(--text); font-weight: 700; }
+
+  /* Progress bar */
+  .progress-wrap { margin-bottom: 1.5rem; }
+  .progress-labels {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--muted); margin-bottom: 6px;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s;
+  }
+
+  /* Mint button */
+  .btn-mint {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent);
+    color: #080808;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--display);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-mint:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-mint:active { transform: translateY(0); }
+  .btn-mint:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-connect {
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    font-family: var(--display);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .btn-connect:hover { border-color: var(--accent); background: rgba(200,240,96,0.04); }
+
+  .wallet-addr {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 0.75rem;
+    font-family: var(--mono);
+  }
+  .status-msg {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 3px;
+    font-size: 12px;
+    text-align: center;
+    display: none;
+  }
+  .status-msg.success { background: rgba(200,240,96,0.08); border: 1px solid rgba(200,240,96,0.3); color: var(--accent); display: block; }
+  .status-msg.error   { background: rgba(240,80,80,0.08);  border: 1px solid rgba(240,80,80,0.3);  color: #f05050; display: block; }
+  .status-msg.pending { background: rgba(240,160,96,0.08); border: 1px solid rgba(240,160,96,0.3); color: var(--warn); display: block; }
+
+  /* ─── Stats grid ─────────────────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+  }
+  .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-family: var(--display); font-weight: 800; font-size: 1.75rem; letter-spacing: -0.03em; color: var(--text); }
+  .stat-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ─── Curve visual ──────────────────────────────────────────────── */
+  .curve-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .curve-canvas { width: 100%; height: 140px; }
+
+  /* ─── Footer ─────────────────────────────────────────────────────── */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+
+  /* ─── Animated ticker ──────────────────────────────────────────── */
+  .ticker {
+    background: var(--accent);
+    color: #080808;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative; z-index: 1;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 20s linear infinite;
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<div class="ticker">
+  <span class="ticker-inner">
+    SATO NFT &nbsp;·&nbsp; 10,000 UNIQUE ARTIFACTS &nbsp;·&nbsp; BONDING CURVE MINT &nbsp;·&nbsp; ETHEREUM &nbsp;·&nbsp; OPENSEA &nbsp;·&nbsp;
+    SATO NFT &nbsp;·&nbsp; 10,000 UNIQUE ARTIFACTS &nbsp;·&nbsp; BONDING CURVE MINT &nbsp;·&nbsp; ETHEREUM &nbsp;·&nbsp; OPENSEA &nbsp;·&nbsp;
+    SATO NFT &nbsp;·&nbsp; 10,000 UNIQUE ARTIFACTS &nbsp;·&nbsp; BONDING CURVE MINT &nbsp;·&nbsp; ETHEREUM &nbsp;·&nbsp; OPENSEA &nbsp;·&nbsp;
+    SATO NFT &nbsp;·&nbsp; 10,000 UNIQUE ARTIFACTS &nbsp;·&nbsp; BONDING CURVE MINT &nbsp;·&nbsp; ETHEREUM &nbsp;·&nbsp; OPENSEA &nbsp;·&nbsp;
+  </span>
+</div>
+
+<nav>
+  <div class="logo">SATO</div>
+  <div class="nav-info">
+    <div class="nav-stat">
+      <div class="nav-stat-label">minted</div>
+      <div class="nav-stat-value" id="nav-minted">—</div>
+    </div>
+    <div class="nav-stat">
+      <div class="nav-stat-label">price</div>
+      <div class="nav-stat-value" id="nav-price">—</div>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-text">
+    <h1>SA<span>TO</span><br>NFT</h1>
+    <p class="hero-sub">
+      10,000 generative artifacts on Ethereum.
+      Mint price rises on a bonding curve — from $1 to $20.
+      Early minters get the lowest price.
+    </p>
+    <div class="tags">
+      <span class="tag accent">10,000 supply</span>
+      <span class="tag">ERC-721</span>
+      <span class="tag">Chainlink oracle</span>
+      <span class="tag">5% royalty</span>
+    </div>
+  </div>
+
+  <div class="preview-card">
+    <div class="preview-art">
+      <!-- Placeholder generative SVG art -->
+      <svg class="art-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="80" stroke="#c8f060" stroke-width="0.5" opacity="0.3"/>
+        <circle cx="100" cy="100" r="55" stroke="#c8f060" stroke-width="0.5" opacity="0.5"/>
+        <circle cx="100" cy="100" r="30" stroke="#c8f060" stroke-width="1" opacity="0.8"/>
+        <line x1="20"  y1="100" x2="180" y2="100" stroke="#c8f060" stroke-width="0.3" opacity="0.4"/>
+        <line x1="100" y1="20"  x2="100" y2="180" stroke="#c8f060" stroke-width="0.3" opacity="0.4"/>
+        <line x1="35"  y1="35"  x2="165" y2="165" stroke="#c8f060" stroke-width="0.3" opacity="0.3"/>
+        <line x1="165" y1="35"  x2="35"  y2="165" stroke="#c8f060" stroke-width="0.3" opacity="0.3"/>
+        <polygon points="100,30 160,80 140,150 60,150 40,80" stroke="#f0a060" stroke-width="0.5" fill="none" opacity="0.6"/>
+        <text x="100" y="106" text-anchor="middle" font-family="Space Mono" font-size="14" fill="#c8f060" opacity="0.9">#????</text>
+        <circle cx="100" cy="100" r="4" fill="#c8f060"/>
+      </svg>
+    </div>
+    <div class="preview-meta">
+      <div class="preview-name">SATO #????</div>
+      <div class="preview-rarity">unrevealed</div>
+    </div>
+  </div>
+</section>
+
+<main class="main">
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">total supply</div>
+      <div class="stat-value">10,000</div>
+      <div class="stat-sub">ERC-721 Ethereum</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">minted</div>
+      <div class="stat-value" id="stat-minted">0</div>
+      <div class="stat-sub" id="stat-pct">0% complete</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">current price</div>
+      <div class="stat-value" id="stat-price">$1.00</div>
+      <div class="stat-sub" id="stat-eth">— ETH</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">peak price</div>
+      <div class="stat-value">$20.00</div>
+      <div class="stat-sub">at token #10,000</div>
+    </div>
+  </div>
+
+  <!-- Curve chart -->
+  <div class="curve-wrap">
+    <div class="panel-title">mint price curve</div>
+    <canvas class="curve-canvas" id="curve"></canvas>
+  </div>
+
+  <!-- Mint panel -->
+  <div class="mint-panel">
+    <div class="panel-title">mint SATO</div>
+
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="prog-minted">0 minted</span>
+        <span>10,000 total</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="prog-bar" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="price-display">
+      <div class="price-eth" id="mint-price-eth">—</div>
+      <div class="price-usd" id="mint-price-usd">ETH</div>
+    </div>
+
+    <div class="qty-row">
+      <span class="qty-label">quantity (max 10)</span>
+      <div class="qty-btns">
+        <button class="qty-btn" id="qty-minus">−</button>
+        <div class="qty-val" id="qty-display">1</div>
+        <button class="qty-btn" id="qty-plus">+</button>
+      </div>
+    </div>
+
+    <div class="cost-row">
+      <span>total cost</span>
+      <span id="total-cost">— ETH</span>
+    </div>
+
+    <button class="btn-connect" id="btn-connect" onclick="connectWallet()">
+      Connect Wallet
+    </button>
+    <button class="btn-mint" id="btn-mint" style="display:none" onclick="doMint()">
+      Mint SATO
+    </button>
+    <div class="wallet-addr" id="wallet-addr"></div>
+    <div class="status-msg" id="status-msg"></div>
+  </div>
+
+</main>
+
+<footer>
+  <p>
+    SATO &nbsp;·&nbsp;
+    <a href="https://etherscan.io/address/0xYOUR_CONTRACT" target="_blank">Contract</a> &nbsp;·&nbsp;
+    <a href="https://opensea.io/collection/sato" target="_blank">OpenSea</a> &nbsp;·&nbsp;
+    <a href="https://twitter.com/satonft" target="_blank">Twitter</a>
+  </p>
+  <p style="margin-top:8px">© 2025 SATO. All rights reserved.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────
+const CONTRACT_ADDRESS = "0xYOUR_SATO_CONTRACT_ADDRESS"; // REPLACE
+const CHAIN_ID         = 1;    // Ethereum mainnet (use 11155111 for Sepolia)
+const MAX_PER_TX       = 10;
+const MAX_SUPPLY       = 10_000;
+const ETH_USD_ESTIMATE = 2500; // fallback for display only (oracle used on-chain)
+
+// Minimal ABI for mint site
+const ABI = [
+  "function mint(uint256 qty) payable",
+  "function mintCostWei(uint256 qty) view returns (uint256)",
+  "function mintPriceWei() view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
+  "function mintActive() view returns (bool)",
+  "function mintsPerWallet(address) view returns (uint256)"
+];
+
+// ─── State ────────────────────────────────────────────────────────────────
+let provider, signer, contract, walletAddr;
+let supply = 0, qty = 1, priceWei = BigInt(0);
+
+// ─── Curve math (client-side display) ────────────────────────────────────
+function priceUsd(n) { return 1 + 19 * Math.pow(n / MAX_SUPPLY, 2); }
+
+// ─── Draw curve canvas ────────────────────────────────────────────────────
+function drawCurve(minted = 0) {
+  const canvas = document.getElementById('curve');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  const pad = { t: 10, r: 20, b: 30, l: 50 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Curve fill
+  ctx.beginPath();
+  for (let i = 0; i <= MAX_SUPPLY; i += 50) {
+    const x = pad.l + (i / MAX_SUPPLY) * cw;
+    const y = pad.t + ch - ((priceUsd(i) - 1) / 19) * ch;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.lineTo(pad.l + cw, pad.t + ch);
+  ctx.lineTo(pad.l, pad.t + ch);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(200,240,96,0.05)';
+  ctx.fill();
+
+  // Curve line
+  ctx.beginPath();
+  ctx.strokeStyle = '#c8f060';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i <= MAX_SUPPLY; i += 50) {
+    const x = pad.l + (i / MAX_SUPPLY) * cw;
+    const y = pad.t + ch - ((priceUsd(i) - 1) / 19) * ch;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Minted fill
+  if (minted > 0) {
+    ctx.beginPath();
+    for (let i = 0; i <= minted; i += 50) {
+      const x = pad.l + (i / MAX_SUPPLY) * cw;
+      const y = pad.t + ch - ((priceUsd(i) - 1) / 19) * ch;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    const xm = pad.l + (minted / MAX_SUPPLY) * cw;
+    ctx.lineTo(xm, pad.t + ch);
+    ctx.lineTo(pad.l, pad.t + ch);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(200,240,96,0.15)';
+    ctx.fill();
+
+    // Current position dot
+    const cx2 = pad.l + (minted / MAX_SUPPLY) * cw;
+    const cy2 = pad.t + ch - ((priceUsd(minted) - 1) / 19) * ch;
+    ctx.beginPath();
+    ctx.arc(cx2, cy2, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#c8f060';
+    ctx.fill();
+  }
+
+  // Y axis labels
+  ctx.fillStyle = '#666';
+  ctx.font = '10px Space Mono, monospace';
+  ctx.textAlign = 'right';
+  ['$1', '$5', '$10', '$15', '$20'].forEach((label, i) => {
+    const val = [1, 5, 10, 15, 20][i];
+    const y = pad.t + ch - ((val - 1) / 19) * ch;
+    ctx.fillText(label, pad.l - 6, y + 4);
+  });
+
+  // X axis labels
+  ctx.textAlign = 'center';
+  [0, 2500, 5000, 7500, 10000].forEach(n => {
+    const x = pad.l + (n / MAX_SUPPLY) * cw;
+    ctx.fillText(n === 10000 ? '10k' : (n / 1000) + 'k', x, H - 6);
+  });
+}
+
+// ─── Refresh UI ──────────────────────────────────────────────────────────
+function updateDisplays() {
+  const p = priceUsd(supply);
+  const pEth = (p / ETH_USD_ESTIMATE).toFixed(5);
+  const pct  = (supply / MAX_SUPPLY * 100).toFixed(1);
+
+  document.getElementById('nav-minted').textContent  = supply.toLocaleString();
+  document.getElementById('nav-price').textContent   = `$${p.toFixed(2)}`;
+  document.getElementById('stat-minted').textContent = supply.toLocaleString();
+  document.getElementById('stat-pct').textContent    = `${pct}% complete`;
+  document.getElementById('stat-price').textContent  = `$${p.toFixed(2)}`;
+  document.getElementById('stat-eth').textContent    = `${pEth} ETH`;
+
+  document.getElementById('prog-minted').textContent = `${supply.toLocaleString()} minted`;
+  document.getElementById('prog-bar').style.width    = `${pct}%`;
+
+  document.getElementById('mint-price-eth').textContent = `${pEth}`;
+  document.getElementById('mint-price-usd').textContent = `ETH ≈ $${p.toFixed(2)}`;
+
+  let totalEth = 0;
+  for (let i = 0; i < qty; i++) totalEth += priceUsd(supply + i) / ETH_USD_ESTIMATE;
+  document.getElementById('total-cost').textContent = `${totalEth.toFixed(5)} ETH`;
+
+  drawCurve(supply);
+}
+
+// ─── Quantity controls ────────────────────────────────────────────────────
+let _qty = 1;
+document.getElementById('qty-minus').onclick = () => {
+  if (_qty > 1) { _qty--; document.getElementById('qty-display').textContent = _qty; qty = _qty; updateDisplays(); }
+};
+document.getElementById('qty-plus').onclick = () => {
+  if (_qty < MAX_PER_TX) { _qty++; document.getElementById('qty-display').textContent = _qty; qty = _qty; updateDisplays(); }
+};
+
+// ─── Wallet ───────────────────────────────────────────────────────────────
+async function connectWallet() {
+  if (!window.ethereum) {
+    showStatus('Please install MetaMask.', 'error'); return;
+  }
+  try {
+    provider  = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const net = await provider.getNetwork();
+    if (net.chainId !== CHAIN_ID) {
+      showStatus(`Please switch to Ethereum mainnet.`, 'error'); return;
+    }
+    signer    = provider.getSigner();
+    walletAddr = await signer.getAddress();
+    contract  = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    document.getElementById('btn-connect').style.display = 'none';
+    document.getElementById('btn-mint').style.display    = 'block';
+    document.getElementById('wallet-addr').textContent   = walletAddr.slice(0,6) + '…' + walletAddr.slice(-4);
+
+    await refreshChainData();
+  } catch (e) {
+    showStatus(e.message, 'error');
+  }
+}
+
+async function refreshChainData() {
+  if (!contract) return;
+  try {
+    supply = (await contract.totalSupply()).toNumber();
+    priceWei = await contract.mintPriceWei();
+    updateDisplays();
+  } catch (_) {}
+}
+
+// ─── Mint ─────────────────────────────────────────────────────────────────
+async function doMint() {
+  if (!contract) return;
+  try {
+    showStatus('Calculating cost…', 'pending');
+    const cost = await contract.mintCostWei(_qty);
+    showStatus('Confirm in wallet…', 'pending');
+
+    const tx = await contract.mint(_qty, { value: cost });
+    showStatus(`TX submitted: ${tx.hash.slice(0,10)}…`, 'pending');
+
+    await tx.wait();
+    showStatus(`Minted ${_qty} SATO! 🎉`, 'success');
+    await refreshChainData();
+  } catch (e) {
+    const msg = e?.reason || e?.message || 'Transaction failed';
+    showStatus(msg.length > 80 ? msg.slice(0,80) + '…' : msg, 'error');
+  }
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.className = `status-msg ${type}`;
+  el.textContent = msg;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+updateDisplays();
+window.addEventListener('resize', () => drawCurve(supply));
+</script>
+</body>
+</html>
